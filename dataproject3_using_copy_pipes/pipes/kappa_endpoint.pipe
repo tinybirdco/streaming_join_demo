@@ -1,3 +1,5 @@
+TOKEN "api_kappa" READ
+
 NODE gps_not_processed
 DESCRIPTION >
     Retreives the data from the last window plus an extra 10 min window from __gps_data__ that have not been processed. We add the extra 10 min in case there was some out of order messages in the streams.

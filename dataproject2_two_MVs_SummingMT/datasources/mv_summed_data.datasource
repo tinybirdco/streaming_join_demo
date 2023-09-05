@@ -1,4 +1,3 @@
-# Data Source created from Pipe 'mat_gps_smt'
 
 SCHEMA >
     `timestamp` DateTime,
