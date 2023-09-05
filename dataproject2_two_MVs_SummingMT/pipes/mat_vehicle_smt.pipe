@@ -1,9 +1,0 @@
-NODE mat_node
-SQL >
-
-    SELECT timestamp, vehicle_id, argMaxState(speed, timestamp) AS speed, argMaxState(fuel_level_percentage, timestamp) AS fuel_level_percentage
-    FROM vehicle_data
-    GROUP BY timestamp, vehicle_id
-
-TYPE materialized
-DATASOURCE mv_summed_data

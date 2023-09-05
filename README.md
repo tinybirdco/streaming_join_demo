@@ -176,12 +176,12 @@ Also, depending on your scale and how well queries and sorting keys are defined,
 
 So, if you face these errors or if you need a lot of accuracy, consider these other 2 options:
 
-### Two materializing pipes ending in a SummingMergeTree Data Source
+### Two materializing pipes ending in a AggregatingMergeTree Data Source
 
-It seems a bit strange going for a SummingMergeTree, but what we really want from here is its ability to materialize the streams into a DS independently and then the background process and the deduplication at query time would take care of joining them.
+It seems a bit strange going for a AggregatingMergeTree, but what we really want from here is its ability to materialize the streams into a DS independently and then the background process and the deduplication at query time would take care of joining them.
 
 ```bash
-cd ../dataproject2_two_MVs_SummingMT
+cd ../dataproject2_two_MVs_AggregatingMT
 
 cp ../dataproject0_the_issue/.tinyb ./
 
@@ -201,7 +201,7 @@ select
   argMaxMerge(longitude) 
   longitude, argMaxMerge(speed) speed, 
   argMaxMerge(fuel_level_percentage) fuel_level_percentage 
-from mv_summed_data 
+from mv_combined_data 
 group by timestamp, vehicle_id"
 ```
 
