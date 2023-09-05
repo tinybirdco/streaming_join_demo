@@ -1,0 +1,10 @@
+NODE mat_node
+SQL >
+
+    SELECT timestamp, vehicle_id, argMaxState(latitude, timestamp) AS latitude, argMaxState(longitude, timestamp) AS longitude
+    FROM gps_data
+    GROUP BY timestamp, vehicle_id
+
+TYPE materialized
+DATASOURCE mv_combined_data
+
