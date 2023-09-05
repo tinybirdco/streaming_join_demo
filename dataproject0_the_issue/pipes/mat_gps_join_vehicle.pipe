@@ -1,0 +1,20 @@
+NODE mat_node
+SQL >
+
+    SELECT timestamp, vehicle_id, latitude, longitude, speed, fuel_level_percentage
+    FROM gps_data g
+    JOIN
+        (
+            SELECT timestamp, vehicle_id, speed, fuel_level_percentage
+            FROM vehicle_data
+            WHERE (timestamp, vehicle_id) IN (SELECT timestamp, vehicle_id FROM gps_data)
+        ) v
+        ON g.vehicle_id = v.vehicle_id
+        AND g.timestamp = v.timestamp
+
+TYPE materialized
+DATASOURCE mv_joined_data
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(timestamp)"
+ENGINE_SORTING_KEY "vehicle_id, timestamp"
+

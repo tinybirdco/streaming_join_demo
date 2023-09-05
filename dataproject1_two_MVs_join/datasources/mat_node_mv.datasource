@@ -1,0 +1,13 @@
+# Data Source created from Pipe 'mat_gps_join_vehicle'
+
+SCHEMA >
+    `timestamp` DateTime,
+    `vehicle_id` UUID,
+    `latitude` Float32,
+    `longitude` Float32,
+    `speed` Int16,
+    `fuel_level_percentage` Int16
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(timestamp)"
+ENGINE_SORTING_KEY "vehicle_id, timestamp"

@@ -1,0 +1,61 @@
+DESCRIPTION >
+	note about ternary operator used in the pipe: `max(timestamp) == toDateTime(0) ? toDateTime(0) : max(timestamp) - INTERVAL 10 MINUTE`
+when there is no data in __ds_joined_data__, max(timestamp) equals 0, i.e. 1970-01-01 00:00:00, and that makes our 10 min substraction to be 2106-02-07 06:18:16, that's why we add here the ternary operator to do the substraction only if there is already a ts in ds_joined_data
+
+
+TOKEN "scheduled_copy_t" READ
+
+NODE gps_not_processed
+DESCRIPTION >
+    Retreives the data from the last window plus an extra 10 min window from __gps_data__ that have not been processed. We add the extra 10 min in case there was some out of order messages in the streams.
+
+SQL >
+
+    SELECT timestamp, vehicle_id, latitude, longitude
+    FROM gps_data
+    WHERE
+        timestamp > ( SELECT max(timestamp) == toDateTime(0) ? toDateTime(0) : max(timestamp) - INTERVAL 10 MINUTE FROM ds_joined_data )
+        AND (timestamp, vehicle_id) NOT IN (
+            SELECT timestamp, vehicle_id
+            FROM ds_joined_data
+            WHERE timestamp > ( SELECT max(timestamp) == toDateTime(0) ? toDateTime(0) : max(timestamp) - INTERVAL 10 MINUTE FROM ds_joined_data )
+        )
+
+
+
+NODE vehicle_not_processed
+DESCRIPTION >
+    Same for __vehicle_data__.
+
+SQL >
+
+    SELECT timestamp, vehicle_id, speed, fuel_level_percentage
+    FROM vehicle_data
+    WHERE 
+      timestamp > (SELECT max(timestamp) == toDateTime(0) ? toDateTime(0) : max(timestamp) - INTERVAL 10 MINUTE FROM ds_joined_data) 
+      AND (timestamp, vehicle_id) IN (
+        SELECT timestamp, vehicle_id 
+        FROM gps_not_processed
+      )
+      AND (timestamp, vehicle_id) NOT IN (
+        SELECT timestamp, vehicle_id 
+        FROM ds_joined_data 
+        WHERE timestamp > (SELECT max(timestamp) == toDateTime(0) ? toDateTime(0) : max(timestamp) - INTERVAL 10 MINUTE FROM ds_joined_data)
+      )
+
+
+
+NODE inner_join
+SQL >
+
+    SELECT timestamp, vehicle_id, latitude, longitude, speed, fuel_level_percentage
+    FROM gps_not_processed g
+    INNER JOIN vehicle_not_processed v
+    ON g.vehicle_id = v.vehicle_id
+    AND g.timestamp = v.timestamp
+
+TYPE copy
+TARGET_DATASOURCE ds_joined_data
+COPY_SCHEDULE */10 * * * *
+
+

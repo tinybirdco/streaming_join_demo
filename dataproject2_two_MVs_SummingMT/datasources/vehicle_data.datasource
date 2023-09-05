@@ -1,0 +1,10 @@
+
+SCHEMA >
+    `timestamp` DateTime `json:$.timestamp`,
+    `vehicle_id` UUID `json:$.vehicle_id`,
+    `speed` Int16 `json:$.speed`,
+    `fuel_level_percentage` Int16 `json:$.fuel_level_percentage`
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYear(timestamp)"
+ENGINE_SORTING_KEY "vehicle_id, timestamp"

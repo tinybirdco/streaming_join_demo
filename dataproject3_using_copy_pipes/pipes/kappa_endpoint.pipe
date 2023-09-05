@@ -1,0 +1,65 @@
+NODE gps_not_processed
+DESCRIPTION >
+    Retreives the data from the last window plus an extra 10 min window from __gps_data__ that have not been processed. We add the extra 10 min in case there was some out of order messages in the streams.
+
+SQL >
+
+    SELECT timestamp, vehicle_id, latitude, longitude
+    FROM gps_data
+    WHERE
+        timestamp > ( SELECT max(timestamp) == toDateTime(0) ? toDateTime(0) : max(timestamp) - INTERVAL 10 MINUTE FROM ds_joined_data )
+        AND (timestamp, vehicle_id) NOT IN (
+            SELECT timestamp, vehicle_id
+            FROM ds_joined_data
+            WHERE timestamp > ( SELECT max(timestamp) == toDateTime(0) ? toDateTime(0) : max(timestamp) - INTERVAL 10 MINUTE FROM ds_joined_data )
+        )
+
+
+
+NODE vehicle_not_processed
+DESCRIPTION >
+    Same for __vehicle_data__.
+
+SQL >
+
+    SELECT timestamp, vehicle_id, speed, fuel_level_percentage
+    FROM vehicle_data
+    WHERE 
+      timestamp > (SELECT max(timestamp) == toDateTime(0) ? toDateTime(0) : max(timestamp) - INTERVAL 10 MINUTE FROM ds_joined_data) 
+      AND (timestamp, vehicle_id) IN (
+        SELECT timestamp, vehicle_id 
+        FROM gps_not_processed
+      )
+      AND (timestamp, vehicle_id) NOT IN (
+        SELECT timestamp, vehicle_id 
+        FROM ds_joined_data 
+        WHERE timestamp > (SELECT max(timestamp) == toDateTime(0) ? toDateTime(0) : max(timestamp) - INTERVAL 10 MINUTE FROM ds_joined_data)
+      )
+
+
+
+NODE inner_join
+DESCRIPTION >
+    joining the not processed yet messages
+
+SQL >
+
+    SELECT timestamp, vehicle_id, latitude, longitude, speed, fuel_level_percentage
+    FROM gps_not_processed g
+    INNER JOIN vehicle_not_processed v
+    ON g.vehicle_id = v.vehicle_id
+    AND g.timestamp = v.timestamp
+
+
+
+NODE endpoint
+DESCRIPTION >
+    and unioning them with the already processed
+
+SQL >
+
+    SELECT * FROM ds_joined_data
+    UNION ALL
+    SELECT * FROM inner_join
+
+
