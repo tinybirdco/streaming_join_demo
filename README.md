@@ -145,6 +145,8 @@ ENGINE_SORTING_KEY "vehicle_id, timestamp"
 Testing it:
 
 ```bash
+tb workspace clear --yes
+
 cd ../dataproject1_two_MVs_join
 
 cp ../dataproject0_the_issue/.tinyb ./
@@ -157,7 +159,7 @@ tb sql "select * from vehicle_data"
 
 tb sql "select * from gps_data"
 
-tb sql "select * from mv_joined_data"
+tb sql "select * from mv_joined_data_from_2_pipes"
 ```
 
 Now we do have the expected 2 rows:
@@ -181,6 +183,8 @@ So, if you face these errors or if you need a lot of accuracy, consider these ot
 It seems a bit strange going for a AggregatingMergeTree, but what we really want from here is its ability to materialize the streams into a DS independently and then the background process and the deduplication at query time would take care of joining them.
 
 ```bash
+tb workspace clear --yes
+
 cd ../dataproject2_two_MVs_AggregatingMT
 
 cp ../dataproject0_the_issue/.tinyb ./
@@ -201,7 +205,7 @@ select
   argMaxMerge(longitude) 
   longitude, argMaxMerge(speed) speed, 
   argMaxMerge(fuel_level_percentage) fuel_level_percentage 
-from mv_combined_data 
+from mv_combined_data_amt 
 group by timestamp, vehicle_id"
 ```
 
@@ -212,6 +216,8 @@ group by timestamp, vehicle_id"
 - We need to define a time window that we think is safe for our usecase. Otherwise we would be scanning the entire Data Source on every copy job and would make the solution prohibitive. In the example in this pipe we are taking 10 mins, so if some messages takes longer we may lose them in the joined target Data Source.
 
 ```bash
+tb workspace clear --yes
+
 cd ../dataproject3_using_copy_pipes
 
 cp ../dataproject0_the_issue/.tinyb ./

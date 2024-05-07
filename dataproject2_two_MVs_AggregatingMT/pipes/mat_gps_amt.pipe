@@ -6,5 +6,5 @@ SQL >
     GROUP BY timestamp, vehicle_id
 
 TYPE materialized
-DATASOURCE mv_combined_data
+DATASOURCE mv_combined_data_amt
 
